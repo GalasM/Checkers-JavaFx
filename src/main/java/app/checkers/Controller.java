@@ -1,12 +1,23 @@
 package app.checkers;
 
+import javafx.application.Platform;
 import javafx.event.Event;
 import javafx.event.EventHandler;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
+import javafx.scene.control.Alert;
+import javafx.scene.control.ButtonType;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
+import javafx.scene.text.Text;
+import javafx.stage.Modality;
+import javafx.stage.Popup;
+import javafx.stage.Stage;
 
 import java.util.Arrays;
 import java.util.LinkedList;
+import java.util.Random;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class Controller {
@@ -54,8 +65,10 @@ public class Controller {
         @Override
         public void handle(Event e) {
             Field selected = (Field) e.getSource ();
+            if(selected.isEmpty())
+                resetBoard();
             if (selectedPawn == null) {
-                System.out.println ("wybierz pionka");
+                board.addToInfo(new Text("Wybierz pionka"));
             }
             if (selected.isEmpty () && selectedPawn != null && canMove (selectedPawn, selected.getPosition ())) {
                 makeMove (selected, selectedPawn);
@@ -73,6 +86,7 @@ public class Controller {
             } else {
                 availableMoves (selectedPawn);
             }
+            resetBoard();
             showMoves (selectedPawn);
         }
 
@@ -85,53 +99,51 @@ public class Controller {
         if (pawn.getColor ().equals (PawnColor.RED)) {
             //RUCH DOL PRAWO
             if (pos[1] < 7 && pos[0] < 7 && board.getBoard ()[pos[0] + 1][pos[1] + 1].isEmpty ()) {
-                addMoveToList (moves, pos[0] + 1, pos[1] + 1);
+                addMoveToList (pawn, moves, pos[0] + 1, pos[1] + 1);
             } else {
                 //BICIE DOL PRAWO
                 if (pos[1] < 6 && (pos[0] < 7 && board.getBoard ()[pos[0] + 1][pos[1] + 1].getPawn ().getColor ().equals (PawnColor.BLACK)) && (pos[0] < 6 && board.getBoard ()[pos[0] + 2][pos[1] + 2].isEmpty ())) {
-                    addMoveWithBeatToList (moves, pos[0] + 2, pos[1] + 2, pos[0] + 1, pos[1] + 1);
+                    addMoveWithBeatToList (pawn, moves, pos[0] + 2, pos[1] + 2, pos[0] + 1, pos[1] + 1);
                 }
             }
             //RUCH DOL LEWO
             if (pos[1] < 7 && pos[0] > 0 && board.getBoard ()[pos[0] - 1][pos[1] + 1].isEmpty ()) {
-                addMoveToList (moves, pos[0] - 1, pos[1] + 1);
+                addMoveToList (pawn, moves, pos[0] - 1, pos[1] + 1);
             } else {
                 //BICIE BICIE DOL LEWO
                 if (pos[1] < 6 && (pos[0] > 0 && board.getBoard ()[pos[0] - 1][pos[1] + 1].getPawn ().getColor ().equals (PawnColor.BLACK)) && (pos[0] > 1 && board.getBoard ()[pos[0] - 2][pos[1] + 2].isEmpty ())) {
-                    addMoveWithBeatToList (moves, pos[0] - 2, pos[1] + 2, pos[0] - 1, pos[1] + 1);
+                    addMoveWithBeatToList (pawn, moves, pos[0] - 2, pos[1] + 2, pos[0] - 1, pos[1] + 1);
                 }
             }
         } else {
             //RUCH CZARNEGO
             //RUCH GORA PRAWO
             if (pos[1] > 0 && pos[0] < 7 && board.getBoard ()[pos[0] + 1][pos[1] - 1].isEmpty ()) {
-                addMoveToList (moves, pos[0] + 1, pos[1] - 1);
+                addMoveToList (pawn, moves, pos[0] + 1, pos[1] - 1);
             } else {
                 //BICIE GORA PRAWO
                 if (pos[1] > 1 && (pos[0] < 7 && board.getBoard ()[pos[0] + 1][pos[1] - 1].getPawn ().getColor ().equals (PawnColor.RED)) && (pos[0] < 6 && board.getBoard ()[pos[0] + 2][pos[1] - 2].isEmpty ())) {
-                    addMoveWithBeatToList (moves, pos[0] + 2, pos[1] - 2, pos[0] + 1, pos[1] - 1);
+                    addMoveWithBeatToList (pawn, moves, pos[0] + 2, pos[1] - 2, pos[0] + 1, pos[1] - 1);
                 }
             }
             //RUCH GORA LEWO
             if (pos[1] > 0 && pos[0] > 0 && board.getBoard ()[pos[0] - 1][pos[1] - 1].isEmpty ()) {
-                addMoveToList (moves, pos[0] - 1, pos[1] - 1);
+                addMoveToList (pawn, moves, pos[0] - 1, pos[1] - 1);
             } else {
                 //BICIE GORA LEWO
                 if (pos[1] > 1 && (pos[0] > 0 && board.getBoard ()[pos[0] - 1][pos[1] - 1].getPawn ().getColor ().equals (PawnColor.RED)) && (pos[0] > 1 && board.getBoard ()[pos[0] - 2][pos[1] - 2].isEmpty ())) {
-                    addMoveWithBeatToList (moves, pos[0] - 2, pos[1] - 2, pos[0] - 1, pos[1] - 1);
+                    addMoveWithBeatToList (pawn, moves, pos[0] - 2, pos[1] - 2, pos[0] - 1, pos[1] - 1);
                 }
             }
         }
         pawn.setAvailableMove (moves);
         pawn.haveBeatingAndRemove ();
-        // System.out.println(pawn.toString());
     }
 
     public void availableMovesForKing(Pawn pawn) {
         LinkedList<Move> moves = setMoveKingListFor (pawn);
         pawn.setAvailableMove (moves);
         pawn.haveBeatingAndRemove ();
-        //System.out.println(pawn.toString());
     }
 
     LinkedList<Move> setMoveKingListFor(Pawn pawn) {
@@ -151,17 +163,17 @@ public class Controller {
             //SPRAWDZENIE PRZEKATNEJ LEWO GORA
             while (x >= 0 && y >= 0) {
                 if (board.getBoard ()[x][y].isEmpty ()) {
-                    addMoveToList (moves, x, y);
+                    addMoveToList (pawn, moves, x, y);
                 } else {
                     if (y > 0 && (x > 0 && board.getBoard ()[x][y].getPawn ().getColor ().equals (opponent)) && board.getBoard ()[x - 1][y - 1].isEmpty ()) {
-                        addMoveWithBeatToList (moves, x - 1, y - 1, x, y);
+                        addMoveWithBeatToList (pawn, moves, x - 1, y - 1, x, y);
                         int beatX = x;
                         int beatY = y;
                         x = x - 2;
                         y = y - 2;
                         while (x >= 0 && y >= 0) {
                             if (board.getBoard ()[x][y].isEmpty ()) {
-                                addMoveWithBeatToList (moves, x, y, beatX, beatY);
+                                addMoveWithBeatToList (pawn, moves, x, y, beatX, beatY);
                             } else {
                                 break;
                             }
@@ -182,17 +194,17 @@ public class Controller {
             //SPRAWDZENIE PRZEKATNEJ PRAWO DOL
             while (x <= 7 && y <= 7) {
                 if (board.getBoard ()[x][y].isEmpty ()) {
-                    addMoveToList (moves, x, y);
+                    addMoveToList (pawn, moves, x, y);
                 } else {
                     if (y < 7 && (x < 7 && board.getBoard ()[x][y].getPawn ().getColor ().equals (opponent)) && board.getBoard ()[x + 1][y + 1].isEmpty ()) {
-                        addMoveWithBeatToList (moves, x + 1, y + 1, x, y);
+                        addMoveWithBeatToList (pawn, moves, x + 1, y + 1, x, y);
                         int beatX = x;
                         int beatY = y;
                         x = x + 2;
                         y = y + 2;
                         while (x <= 7 && y <= 7) {
                             if (board.getBoard ()[x][y].isEmpty ()) {
-                                addMoveWithBeatToList (moves, x, y, beatX, beatY);
+                                addMoveWithBeatToList (pawn, moves, x, y, beatX, beatY);
                             } else {
                                 break;
                             }
@@ -213,17 +225,17 @@ public class Controller {
             //SPRAWDZENIE PRZEKATNEJ LEWO DOL
             while (x >= 0 && y <= 7) {
                 if (board.getBoard ()[x][y].isEmpty ()) {
-                    addMoveToList (moves, x, y);
+                    addMoveToList (pawn, moves, x, y);
                 } else {
                     if (y < 7 && (x > 0 && board.getBoard ()[x][y].getPawn ().getColor ().equals (opponent)) && board.getBoard ()[x - 1][y + 1].isEmpty ()) {
-                        addMoveWithBeatToList (moves, x - 1, y + 1, x, y);
+                        addMoveWithBeatToList (pawn, moves, x - 1, y + 1, x, y);
                         int beatX = x;
                         int beatY = y;
                         x = x - 2;
                         y = y + 2;
                         while (x >= 0 && y <= 7) {
                             if (board.getBoard ()[x][y].isEmpty ()) {
-                                addMoveWithBeatToList (moves, x, y, beatX, beatY);
+                                addMoveWithBeatToList (pawn, moves, x, y, beatX, beatY);
                             } else {
                                 break;
                             }
@@ -245,11 +257,11 @@ public class Controller {
             //SPRAWDZENIE PRZEKATNEJ PRAWO GORA
             while (x <= 7 && y >= 0) {
                 if (board.getBoard ()[x][y].isEmpty ()) {
-                    addMoveToList (moves, x, y);
+                    addMoveToList (pawn, moves, x, y);
                 } else {
                     //CZY PIONEK JEST PRZECIWNIKIEM I CZY NASTEPNE POLE JEST WOLE
                     if (y > 0 && (x < 7 && board.getBoard ()[x][y].getPawn ().getColor ().equals (opponent)) && board.getBoard ()[x + 1][y - 1].isEmpty ()) {
-                        addMoveWithBeatToList (moves, x + 1, y - 1, x, y);
+                        addMoveWithBeatToList (pawn, moves, x + 1, y - 1, x, y);
                         int beatX = x;
                         int beatY = y;
                         x = x + 2;
@@ -257,7 +269,7 @@ public class Controller {
 
                         while (x <= 7 && y >= 0) {
                             if (board.getBoard ()[x][y].isEmpty ()) {
-                                addMoveWithBeatToList (moves, x, y, beatX, beatY);
+                                addMoveWithBeatToList (pawn, moves, x, y, beatX, beatY);
                             } else {
                                 break;
                             }
@@ -278,28 +290,35 @@ public class Controller {
     }
 
 
-    public void addMoveToList(LinkedList<Move> list, int x, int y) {
+    public void addMoveToList(Pawn pawn, LinkedList<Move> list, int x, int y) {
         int[] m = new int[2];
         m[0] = x;
         m[1] = y;
-        Move mv = new Move (m, false);
+        Move mv = new Move (m, false,pawn);
         list.add (mv);
     }
 
-    public void addMoveWithBeatToList(LinkedList<Move> list, int x, int y, int x2, int y2) {
+    public void addMoveWithBeatToList(Pawn pawn, LinkedList<Move> list, int x, int y, int x2, int y2) {
         int[] m = new int[2];
         m[0] = x;
         m[1] = y;
         int[] beatField = new int[2];
         beatField[0] = x2;
         beatField[1] = y2;
-        list.add (new Move (m, true, beatField));
+        list.add (new Move (m, true, beatField,pawn));
     }
 
     public void showMoves(Pawn pawn) {
-        pawn.getAvailableMove ().forEach (r -> {
-            //board.getBoard()[r[0]][r[1]].getRectangle().setFill(Color.ALICEBLUE);
-        });
+        pawn.getAvailableMove ().forEach (r -> board.getBoard()[r.getPlace()[0]][r.getPlace()[1]].getRectangle().setFill(Color.ALICEBLUE));
+    }
+    public void resetBoard(){
+        for (int row = 0; row < 8; row++) {
+            for (int col = 0; col < 8; col++) {
+                if (board.getBoard()[row][col].getRectangle().getFill().equals(Color.ALICEBLUE)) {
+                    board.getBoard()[row][col].getRectangle().setFill(Color.LIGHTGRAY);
+                }
+            }
+        }
     }
 
     public boolean canMove(Pawn pawn, int[] field) {
@@ -318,17 +337,14 @@ public class Controller {
 
     public void makeMove(Field field, Pawn pawn) {
         if (currentPlayer.getColor ().equals (pawn.getColor ())) {
-            System.out.println ("Ruszono z: "+pawn.getPosition ()[0] + "," + pawn.getPosition ()[1]+ " na: "+field.getPosition ()[0] + "," + field.getPosition ()[1]);
-            System.out.println ("black: " + playerBlack.getPawns ().size () + " red: " + playerRed.getPawns ().size ());
+            board.addToInfo(new Text("Ruszono z: "+pawn.getPosition ()[0] + "," + pawn.getPosition ()[1]+ " na: "+field.getPosition ()[0] + "," + field.getPosition ()[1]));
             board.getBoard ()[pawn.getPosition ()[0]][pawn.getPosition ()[1]].setEmpty (true);
             field.setPawn (pawn);
             selectedPawn = null;
-            if (pawn.getColor ().equals (PawnColor.RED) && field.getPosition ()[1] == 7) {
+            if (pawn.getColor ().equals (PawnColor.RED) && field.getPosition ()[1] == 7 && !pawn.isKing) {
                 pawn.setKing (true);
-                System.out.println ("Mamy kinga");
-            } else if (pawn.getColor ().equals (PawnColor.BLACK) && field.getPosition ()[1] == 0) {
+            } else if (pawn.getColor ().equals (PawnColor.BLACK) && field.getPosition ()[1] == 0 && !pawn.isKing) {
                 pawn.setKing (true);
-                System.out.println ("Mamy kinga");
             }
             LinkedList<Move> moves = pawn.getAvailableMove ();
             for (Move tmp : moves) {
@@ -337,7 +353,14 @@ public class Controller {
                         board.getBoard ()[tmp.getBeatField ()[0]][tmp.getBeatField ()[1]].setPawn (null);
                         if (pawn.getColor ().equals (PawnColor.RED)) {
                             if (playerBlack.removePawn (tmp.beatField) == 0) {
-                                System.out.println ("WYGRAL CZERWONY");
+                                board.addToInfo(new Text("WYGRAL CZERWONY"));
+                                Alert alert = new Alert(Alert.AlertType.NONE, "WYGRAL CZERWONY", ButtonType.OK);
+                                alert.showAndWait();
+
+                                if (alert.getResult() == ButtonType.OK) {
+                                    System.out.println("Wygral czerwony");
+                                    Platform.exit();
+                                }
                             }
 
                             if (pawn.isKing ())
@@ -350,7 +373,14 @@ public class Controller {
 
                         } else {
                             if (playerRed.removePawn (tmp.beatField) == 0) {
-                                System.out.println ("WYGRAL CZARNY");
+                                board.addToInfo(new Text("WYGRAL CZARNY"));
+                                Alert alert = new Alert(Alert.AlertType.NONE, "WYGRAL CZARNY", ButtonType.OK);
+                                alert.showAndWait();
+
+                                if (alert.getResult() == ButtonType.OK) {
+                                    System.out.println("Wygral czarny");
+                                    Platform.exit();
+                                }
                             }
                             if (pawn.isKing ())
                                 availableMovesForKing (pawn);
@@ -370,28 +400,30 @@ public class Controller {
 
     public void swapPlayer(boolean isBeat) {
         if (currentPlayer.getColor ().equals (PawnColor.RED)) {
+            board.changePlayer(currentPlayer.getColor());
             currentPlayer = playerBlack;
             setAllMovesForPlayer (playerBlack);
-            System.out.println ("Tura CZARNYCH");
 //            call to CPU move function
             if (board.isPlayAgainstComputer () && !isBeat) {
                 makeAIMove(playerBlack);
             }
 
         } else {
+            board.changePlayer(currentPlayer.getColor());
             currentPlayer = playerRed;
             setAllMovesForPlayer (playerRed);
-            System.out.println ("Tura CZERWONYCH");
         }
     }
 
     private void makeAIMove(Player player) {
-
-        LinkedList<Pawn> pawns = player.getPawns ();
+        /*int size = player.getAllPlayerMoves().size();
+        Random rand = new Random();
+        int shot = rand.nextInt(size);
+        Move m = player.getAllPlayerMoves().get(shot);
+        executeMoveForPawn(m,m.getPawn());*/
         double highestWeight = -50;
         Move moveToMake = null;
-        for (Pawn pawn : pawns) {
-            LinkedList<Move> availableMoves = pawn.getAvailableMove ();
+
 
             for (Move move : player.getAllPlayerMoves()) {
                 int[] movePlace = move.getPlace ();
@@ -402,24 +434,20 @@ public class Controller {
                     highestWeight = moveToMake.getWeight ();
                 }
             }
-        }
-        System.out.println("move to make " +  moveToMake);
 
-        for (Pawn pawn : pawns) {
-            LinkedList<Move> availableMoves2 = pawn.getAvailableMove ();
             for (Move move : player.getAllPlayerMoves()) {
                 int[] place = move.getPlace ();
-                if (canMove (pawn, place)) {
+                if (canMove (move.getPawn(), place)) {
                 if (move.isBeating){ // if move is beating it has to be executed
-                    executeMoveForPawn(move, pawn);
+                    executeMoveForPawn(move, move.getPawn());
                     return;
                 }else if (move.equals(moveToMake)) { //if not beating we want to execute move with highest weight
-                    executeMoveForPawn(move, pawn);
+                    executeMoveForPawn(move, move.getPawn());
                     return;
                     }
                 }
             }
-        }
+
     }
     private void executeMoveForPawn(Move move, Pawn pawn){
         int[] place = move.getPlace();

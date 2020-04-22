@@ -19,13 +19,6 @@ public class Field  extends StackPane {
         this.pawn = pawn;
     }
 
-    private void setTextForTesting() { //do usuniecia, chcemy sprawdzic jakie wspolrzedne maja pola - przy testach ruchow AI
-        Text text = new Text("x=" + position[0] + ", y=" + position[1]);
-        text.setText("x=" + position[0] + ", y=" + position[1]);
-        text.setFont(new Font(18));
-        text.setFill(Color.GREEN);
-        this.getChildren().add(text);
-    }
 
     public Field(){
         this.rectangle = new Rectangle(100,100);
@@ -39,7 +32,6 @@ public class Field  extends StackPane {
     public void setPosition(int r,int c) {
         this.position[0] = r;
         this.position[1] = c;
-        setTextForTesting();
     }
 
     public boolean isEmpty() {

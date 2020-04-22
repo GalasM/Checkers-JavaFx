@@ -10,16 +10,19 @@ public class Move {
     private int place[];
     public boolean isBeating;
     public int[] beatField;
+    private Pawn pawn;
 
-    public Move(int[] place, boolean isBeating, int[] beatField) {
+    public Move(int[] place, boolean isBeating, int[] beatField, Pawn pawn) {
         this.place = place;
         this.isBeating = isBeating;
         this.beatField = beatField;
+        this.pawn = pawn;
     }
 
-    public Move(int[] place, boolean isBeating) {
+    public Move(int[] place, boolean isBeating, Pawn pawn) {
         this.place = place;
         this.isBeating = isBeating;
+        this.pawn = pawn;
     }
 
     public Move() {
@@ -65,6 +68,13 @@ public class Move {
         this.weight -= delta;
     }
 
+    public Pawn getPawn() {
+        return pawn;
+    }
+
+    public void setPawn(Pawn pawn) {
+        this.pawn = pawn;
+    }
 
     @Override
     public String toString() {
@@ -74,25 +84,6 @@ public class Move {
                 ", isBeating=" + isBeating +
                 ", beatField=" + Arrays.toString (beatField) +
                 '}';
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof Move)) return false;
-        Move move = (Move) o;
-        return Double.compare(move.weight, weight) == 0 &&
-                isBeating == move.isBeating &&
-                Arrays.equals(place, move.place) &&
-                Arrays.equals(beatField, move.beatField);
-    }
-
-    @Override
-    public int hashCode() {
-        int result = Objects.hash(weight, isBeating);
-        result = 31 * result + Arrays.hashCode(place);
-        result = 31 * result + Arrays.hashCode(beatField);
-        return result;
     }
 }
 
