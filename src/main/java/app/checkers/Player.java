@@ -1,7 +1,6 @@
-package checkers;
+package app.checkers;
 
 import java.util.Arrays;
-
 import java.util.LinkedList;
 
 public class Player {

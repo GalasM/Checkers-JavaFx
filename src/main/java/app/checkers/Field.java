@@ -1,10 +1,12 @@
-package checkers;
+package app.checkers;
 
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
+
+import java.util.Arrays;
 
 public class Field  extends StackPane {
     private int[] position = new int[2];
@@ -16,6 +18,15 @@ public class Field  extends StackPane {
         this.rectangle = new Rectangle(100,100);
         this.pawn = pawn;
     }
+
+    private void setTextForTesting() { //do usuniecia, chcemy sprawdzic jakie wspolrzedne maja pola - przy testach ruchow AI
+        Text text = new Text("x=" + position[0] + ", y=" + position[1]);
+        text.setText("x=" + position[0] + ", y=" + position[1]);
+        text.setFont(new Font(18));
+        text.setFill(Color.GREEN);
+        this.getChildren().add(text);
+    }
+
     public Field(){
         this.rectangle = new Rectangle(100,100);
         this.getChildren().add(rectangle);
@@ -28,6 +39,7 @@ public class Field  extends StackPane {
     public void setPosition(int r,int c) {
         this.position[0] = r;
         this.position[1] = c;
+        setTextForTesting();
     }
 
     public boolean isEmpty() {
@@ -64,11 +76,13 @@ public class Field  extends StackPane {
         }
     }
 
-    public void addKing(){
-        Text text = new Text("K");
-        text.setText("K");
-        text.setFont(new Font(40));
-        text.setFill(Color.WHITE);
-        this.getChildren().add(text);
+
+    @Override
+    public String toString() {
+        return "Field{" +
+                "position=" + Arrays.toString (position) +
+                ", isEmpty=" + isEmpty +
+                ", pawn=" + pawn +
+                '}';
     }
 }

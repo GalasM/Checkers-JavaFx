@@ -1,4 +1,4 @@
-package checkers;
+package app.checkers;
 
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
@@ -55,6 +55,8 @@ public class Pawn extends Circle {
     }
 
     public void setKing(boolean king) {
+        this.setStroke(Color.GOLD);
+        this.setStrokeWidth(6);
         isKing = king;
     }
 
@@ -80,6 +82,7 @@ StringBuilder x = new StringBuilder("[");
         }
         return false;
     }
+
 }
 
 

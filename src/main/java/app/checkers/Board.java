@@ -1,8 +1,7 @@
-package checkers;
+package app.checkers;
 
 import javafx.scene.input.MouseEvent;
 import javafx.scene.paint.Color;
-
 
 import java.util.LinkedList;
 
@@ -11,8 +10,10 @@ public class Board {
     private Controller controller;
     private LinkedList<Pawn> redPawns = new LinkedList<>();
     private LinkedList<Pawn> blackPawns = new LinkedList<>();
+    private boolean playAgainstComputer;
 
-    public Board() {
+    public Board(boolean playAgainstComputer) {
+        this.playAgainstComputer = playAgainstComputer;
         this.controller = new Controller(this);
         for(int i=0;i<8;i++){
             for(int j = 0; j<8; j++){
@@ -105,5 +106,11 @@ public class Board {
         }
     }
 
+    public boolean isPlayAgainstComputer() {
+        return playAgainstComputer;
+    }
 
+    public void setPlayAgainstComputer(boolean playAgainstComputer) {
+        this.playAgainstComputer = playAgainstComputer;
+    }
 }
