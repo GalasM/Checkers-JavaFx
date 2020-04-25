@@ -338,11 +338,9 @@ public class Controller {
                     if (pawn.getColor ().equals (PawnColor.RED) && field.getPosition ()[1] == 7 && !pawn.isKing) {
                         pawn.setKing (true);
                         isNewKing.set(true);
-                        swapPlayer(false);
                     } else if (pawn.getColor ().equals (PawnColor.BLACK) && field.getPosition ()[1] == 0 && !pawn.isKing) {
                         pawn.setKing (true);
                         isNewKing.set(true);
-                        swapPlayer(false);
                     }
                     LinkedList<Move> moves = pawn.getAvailableMove ();
                     for (Move tmp : moves) {
@@ -374,6 +372,9 @@ public class Controller {
                                         swapPlayer (true);
                                     }
                                 }
+                            }
+                            if(isNewKing.get()){
+                                swapPlayer(false);
                             }
                         }
                     }
