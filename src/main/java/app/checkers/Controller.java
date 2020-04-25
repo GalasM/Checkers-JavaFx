@@ -3,21 +3,14 @@ package app.checkers;
 import javafx.application.Platform;
 import javafx.event.Event;
 import javafx.event.EventHandler;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
-import javafx.scene.input.MouseEvent;
-import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Text;
-import javafx.stage.Modality;
-import javafx.stage.Popup;
-import javafx.stage.Stage;
+
 
 import java.util.Arrays;
 import java.util.LinkedList;
-import java.util.Random;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class Controller {
@@ -37,8 +30,8 @@ public class Controller {
 
     public void setBoard(Board board) {
         this.board = board;
-        this.playerRed = new Player (PawnColor.RED, board.getRedPawns ());
-        this.playerBlack = new Player (PawnColor.BLACK, board.getBlackPawns ());
+        this.playerRed = new Player (PawnColor.RED, board.getRedPawns());
+        this.playerBlack = new Player (PawnColor.BLACK, board.getBlackPawns());
         setAllMovesForPlayer (playerBlack);
         setAllMovesForPlayer (playerRed);
         this.currentPlayer = playerRed;
@@ -61,10 +54,10 @@ public class Controller {
     }
 
 
-    EventHandler RectEventHandler = new EventHandler () {
+    EventHandler RectEventHandler = new EventHandler() {
         @Override
         public void handle(Event e) {
-            Field selected = (Field) e.getSource ();
+            Field selected = (Field) e.getSource();
             if(selected.isEmpty())
                 resetBoard();
             if (selectedPawn == null) {
@@ -73,7 +66,6 @@ public class Controller {
             if (selected.isEmpty () && selectedPawn != null && canMove (selectedPawn, selected.getPosition ())) {
                 makeMove (selected, selectedPawn);
             }
-
         }
     };
 
@@ -323,104 +315,130 @@ public class Controller {
 
     public boolean canMove(Pawn pawn, int[] field) {
         AtomicBoolean can = new AtomicBoolean (false);
-        pawn.getAvailableMove ().forEach (e -> {
-            if (Arrays.equals (e.getPlace (), field)) {
-                currentPlayer.getAllPlayerMoves ().forEach (move -> {
-                    if (Arrays.equals (move.getPlace (), field))
-                        can.set (true);
+        pawn.getAvailableMove().forEach(e -> {
+            if (Arrays.equals(e.getPlace(), field)) {
+                currentPlayer.getAllPlayerMoves().forEach (move -> {
+                    if (Arrays.equals (move.getPlace(), field))
+                        can.set(true);
                 });
-
             }
         });
-        return can.get ();
+        return can.get();
     }
 
     public void makeMove(Field field, Pawn pawn) {
+        AtomicBoolean isNewKing = new AtomicBoolean(false);
         if (currentPlayer.getColor ().equals (pawn.getColor ())) {
-            board.addToInfo(new Text("Ruszono z: "+pawn.getPosition ()[0] + "," + pawn.getPosition ()[1]+ " na: "+field.getPosition ()[0] + "," + field.getPosition ()[1]));
-            board.getBoard ()[pawn.getPosition ()[0]][pawn.getPosition ()[1]].setEmpty (true);
-            field.setPawn (pawn);
-            selectedPawn = null;
-            if (pawn.getColor ().equals (PawnColor.RED) && field.getPosition ()[1] == 7 && !pawn.isKing) {
-                pawn.setKing (true);
-            } else if (pawn.getColor ().equals (PawnColor.BLACK) && field.getPosition ()[1] == 0 && !pawn.isKing) {
-                pawn.setKing (true);
-            }
-            LinkedList<Move> moves = pawn.getAvailableMove ();
-            for (Move tmp : moves) {
-                if (Arrays.equals (tmp.getPlace (), field.getPosition ())) {
-                    if (tmp.isBeating) {
-                        board.getBoard ()[tmp.getBeatField ()[0]][tmp.getBeatField ()[1]].setPawn (null);
-                        if (pawn.getColor ().equals (PawnColor.RED)) {
-                            if (playerBlack.removePawn (tmp.beatField) == 0) {
-                                board.addToInfo(new Text("WYGRAL CZERWONY"));
-                                Alert alert = new Alert(Alert.AlertType.NONE, "WYGRAL CZERWONY", ButtonType.OK);
-                                alert.showAndWait();
+            currentPlayer.getAllPlayerMoves().forEach(m -> {
+                if(Arrays.equals(m.getPlace(), field.getPosition()) && m.getPawn().equals(pawn)){
+                    board.addToInfo(new Text("Ruszono z: "+pawn.getPosition ()[0] + "," + pawn.getPosition ()[1]+ " na: "+field.getPosition ()[0] + "," + field.getPosition ()[1]));
+                    board.getBoard ()[pawn.getPosition ()[0]][pawn.getPosition ()[1]].setEmpty (true);
+                    field.setPawn (pawn);
+                    selectedPawn = null;
+                    if (pawn.getColor ().equals (PawnColor.RED) && field.getPosition ()[1] == 7 && !pawn.isKing) {
+                        pawn.setKing (true);
+                        isNewKing.set(true);
+                        swapPlayer(false);
+                    } else if (pawn.getColor ().equals (PawnColor.BLACK) && field.getPosition ()[1] == 0 && !pawn.isKing) {
+                        pawn.setKing (true);
+                        isNewKing.set(true);
+                        swapPlayer(false);
+                    }
+                    LinkedList<Move> moves = pawn.getAvailableMove ();
+                    for (Move tmp : moves) {
+                        if (Arrays.equals (tmp.getPlace (), field.getPosition ())) {
+                            if (tmp.isBeating) {
+                                board.getBoard ()[tmp.getBeatField ()[0]][tmp.getBeatField ()[1]].setPawn (null);
+                                if (pawn.getColor ().equals (PawnColor.RED)) {
+                                    if (playerBlack.removePawn (tmp.beatField) == 0) {
+                                        finishGame(PawnColor.RED);
+                                    }
 
-                                if (alert.getResult() == ButtonType.OK) {
-                                    System.out.println("Wygral czerwony");
-                                    Platform.exit();
+                                    if (pawn.isKing ())
+                                        availableMovesForKing (pawn);
+                                    else
+                                        availableMoves (pawn);
+                                    if (pawn.haveBeatingAndRemove () && !isNewKing.get()) {
+                                        swapPlayer (true);
+                                    }
+
+                                } else {
+                                    if (playerRed.removePawn (tmp.beatField) == 0) {
+                                        finishGame(PawnColor.BLACK);
+                                    }
+                                    if (pawn.isKing ())
+                                        availableMovesForKing (pawn);
+                                    else
+                                        availableMoves (pawn);
+                                    if (pawn.haveBeatingAndRemove () && !isNewKing.get()) {
+                                        swapPlayer (true);
+                                    }
                                 }
-                            }
-
-                            if (pawn.isKing ())
-                                availableMovesForKing (pawn);
-                            else
-                                availableMoves (pawn);
-                            if (pawn.haveBeatingAndRemove ()) {
-                                swapPlayer (true);
-                            }
-
-                        } else {
-                            if (playerRed.removePawn (tmp.beatField) == 0) {
-                                board.addToInfo(new Text("WYGRAL CZARNY"));
-                                Alert alert = new Alert(Alert.AlertType.NONE, "WYGRAL CZARNY", ButtonType.OK);
-                                alert.showAndWait();
-
-                                if (alert.getResult() == ButtonType.OK) {
-                                    System.out.println("Wygral czarny");
-                                    Platform.exit();
-                                }
-                            }
-                            if (pawn.isKing ())
-                                availableMovesForKing (pawn);
-                            else
-                                availableMoves (pawn);
-                            if (pawn.haveBeatingAndRemove ()) {
-                                swapPlayer (true);
                             }
                         }
                     }
+                    if(!isNewKing.get())
+                    swapPlayer (false);
+                }
+            });
+
+        }
+    }
+
+    private void finishGame(PawnColor color) {
+            if (color.equals(PawnColor.RED)) {
+                board.addToInfo(new Text("WYGRAL CZERWONY"));
+                Alert alert = new Alert(Alert.AlertType.NONE, "WYGRAL CZERWONY", ButtonType.OK);
+                alert.showAndWait();
+
+                if (alert.getResult() == ButtonType.OK) {
+                    alert.close();
+                    System.out.println("Wygral czerwony");
+                    Platform.exit();
+                    System.exit(0);
                 }
             }
 
-            swapPlayer (false);
+        else {
+            board.addToInfo(new Text("WYGRAL CZARNY"));
+            Alert alert = new Alert(Alert.AlertType.NONE, "WYGRAL CZARNY", ButtonType.OK);
+            alert.showAndWait();
+
+            if (alert.getResult() == ButtonType.OK) {
+                alert.close();
+                System.out.println("Wygral czarny");
+                Platform.exit();
+                System.exit(0);
+            }
         }
     }
 
     public void swapPlayer(boolean isBeat) {
         if (currentPlayer.getColor ().equals (PawnColor.RED)) {
-            board.changePlayer(currentPlayer.getColor());
+            if(!isBeat)
+                board.changePlayer(currentPlayer.getColor());
             currentPlayer = playerBlack;
             setAllMovesForPlayer (playerBlack);
+            if(playerBlack.getAllPlayerMoves().isEmpty()){
+                finishGame(PawnColor.RED);
+            }
 //            call to CPU move function
             if (board.isPlayAgainstComputer () && !isBeat) {
                 makeAIMove(playerBlack);
             }
 
         } else {
-            board.changePlayer(currentPlayer.getColor());
+            if(!isBeat)
+                board.changePlayer(currentPlayer.getColor());
             currentPlayer = playerRed;
             setAllMovesForPlayer (playerRed);
+            if(playerRed.getAllPlayerMoves().isEmpty()){
+                finishGame(PawnColor.BLACK);
+            }
         }
     }
 
     private void makeAIMove(Player player) {
-        /*int size = player.getAllPlayerMoves().size();
-        Random rand = new Random();
-        int shot = rand.nextInt(size);
-        Move m = player.getAllPlayerMoves().get(shot);
-        executeMoveForPawn(m,m.getPawn());*/
         double highestWeight = -50;
         Move moveToMake = null;
 

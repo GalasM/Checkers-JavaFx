@@ -46,8 +46,9 @@ public class Player {
     public void removeMovesWithoutBeat(){
         LinkedList<Move> beats = new LinkedList<>();
         for(Move m: allPlayerMoves){
-            if(m.isBeating())
+            if(m.isBeating()) {
                 beats.add(m);
+            }
         }
         if(!beats.isEmpty()){
             allPlayerMoves.clear();
